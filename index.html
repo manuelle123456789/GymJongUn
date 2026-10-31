@@ -263,7 +263,7 @@ nav.tabs button.on{color:var(--accent)}
   <button class="btn ghost" id="btnTest" style="margin-top:12px">🔊 Signale testen</button>
   <h2>Daten</h2>
   <button class="btn danger" id="btnClearHist">Verlauf löschen</button>
-  <p class="muted small" style="margin-top:20px">Alle Daten bleiben nur auf diesem Gerät. Trainings, die älter als 30 Tage sind, werden automatisch entfernt.</p>
+  <p class="muted small" style="margin-top:20px">App-Version <b id="appVer"></b> · Alle Daten bleiben nur auf diesem Gerät. Trainings, die älter als 30 Tage sind, werden automatisch entfernt.</p>
 </div></section>
 
 <!-- ===== Timer ===== -->
@@ -957,6 +957,7 @@ function renderSettings(){
   $$('#l5 button').forEach(b=>b.onclick=()=>{settings.last5=b.dataset.v;save();renderSettings()});
   $$('#prep button').forEach(b=>b.onclick=()=>{settings.prep=+b.dataset.v;save();renderSettings()});
   $('#vibNote').style.display=canVibrate()?'none':'block';
+  $('#appVer').textContent=APP_VERSION;
 }
 $('#btnTest').onclick=()=>{ensureAudio();SIG.go();setTimeout(SIG.tick,900);setTimeout(SIG.half,1600);setTimeout(SIG.end,2800)};
 $('#btnClearHist').onclick=()=>modal(`<h3>Gesamten Verlauf löschen?</h3><button class="btn danger" data-a="y">Löschen</button><button class="btn ghost" data-a="n">Abbrechen</button>`,a=>{
@@ -971,7 +972,20 @@ function modal(html,cb){
 }
 
 renderCreate();
-if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+/* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
+const APP_VERSION='v11';
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
+  navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
+    reg.update().catch(()=>{});
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{})});
+  }).catch(()=>{});
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!hadCtrl||reloading)return;
+    if(run&&!run.done){toast('Update bereit – nach dem Training neu öffnen');return}
+    reloading=true;location.reload();
+  });
+}
 </script>
 </body>
 </html>
