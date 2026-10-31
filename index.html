@@ -133,11 +133,16 @@ nav.tabs button.on{color:var(--accent)}
 #timer.work .phase{color:var(--accent)} #timer.rest .phase,#timer.cool .phase{color:var(--rest)} #timer.prep .phase{color:var(--warn)}
 #timer .clock{font-size:min(30vw,150px);font-weight:800;text-align:center;letter-spacing:-.04em;font-variant-numeric:tabular-nums;line-height:1;margin:auto 0 6px}
 #timer.am .clock{font-size:min(22vw,104px);margin:18px 0 4px}
+#timer.am .total{display:none}
 #timer .total{text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
 #timer .bar{height:6px;border-radius:9px;background:rgba(255,255,255,.08);margin:14px 0;overflow:hidden;flex:none}
 #timer .bar i{display:block;height:100%;background:var(--accent);width:0}
 #timer.cool .bar i{background:var(--rest)}
 #timer .cur{text-align:center;margin:8px 0 2px}
+#timer.work .cur{background:rgba(200,241,105,.10);border:2px solid var(--accent);border-radius:20px;padding:16px 12px 14px}
+#timer.work .cur .exn{font-size:clamp(34px,10vw,52px);line-height:1.08}
+#timer.work .cur .exr{font-size:clamp(26px,7.5vw,36px);margin-top:6px}
+#timer.work .clock{font-size:min(24vw,120px)}
 #timer .cur .exn{font-size:28px;font-weight:800;letter-spacing:-.02em}
 #timer .cur .exr{font-size:22px;color:var(--accent);font-weight:700;min-height:28px}
 #timer.cool .cur .exr{color:var(--rest)}
@@ -349,8 +354,7 @@ const STRETCHES = [
 const BREATH = {name:'Tiefe Bauchatmung',regions:[],sec:60,cue:'Rückenlage · 4 s ein, 6 s aus'};
 
 const EQUIP = [
-  {id:'kettlebell',name:'Kettlebell'},{id:'band',name:'Trainingsband'},{id:'seil',name:'Springseil'},
-  {id:'kh',name:'Kurzhantel'},{id:'lh',name:'Langhantel'}
+  {id:'kettlebell',name:'Kettlebell'},{id:'band',name:'Trainingsband'},{id:'seil',name:'Springseil'}
 ];
 /* Beispielübungen mit Hilfsmitteln (equip = benötigte Hilfsmittel) */
 const EQUIP_EXERCISES = [
@@ -366,17 +370,6 @@ const EQUIP_EXERCISES = [
   {name:'Band Bizepscurls',regions:['arme'],reps:15,unit:'wdh',equip:['band'],desc:'Mit beiden Füßen auf dem Band stehen. Enden mit gestreckten Armen halten, Unterarme zur Schulter beugen, Ellbogen bleiben am Körper.'},
   {name:'Seilspringen',regions:['ganzkoerper','beine'],reps:45,unit:'sek',equip:['seil'],desc:'Locker auf dem Vorfuß springen, Seil aus den Handgelenken drehen, Ellbogen nah am Körper.'},
   {name:'Seilspringen Wechselschritt',regions:['beine','ganzkoerper'],reps:40,unit:'sek',equip:['seil'],desc:'Wie beim Joggen auf der Stelle abwechselnd links und rechts über das Seil laufen. Zügiges Tempo.'},
-  {name:'Kurzhantel Schulterdrücken',regions:['schultern','arme'],reps:10,unit:'wdh',equip:['kh'],desc:'Hanteln auf Schulterhöhe, Handflächen nach vorn. Über Kopf strecken, ohne ins Hohlkreuz zu gehen, kontrolliert zurück.'},
-  {name:'Kurzhantel Floor Press',regions:['brust','arme'],reps:10,unit:'wdh',equip:['kh'],desc:'Rückenlage, Knie angewinkelt. Hanteln über der Brust strecken, absenken bis die Oberarme den Boden berühren, wieder hochdrücken.'},
-  {name:'Kurzhantel Rudern vorgebeugt',regions:['ruecken','arme'],reps:10,unit:'wdh',equip:['kh'],desc:'Oberkörper mit geradem Rücken nach vorn neigen. Hanteln zur Hüfte ziehen, Schulterblätter zusammen, langsam ablassen.'},
-  {name:'Kurzhantel Bizepscurls',regions:['arme'],reps:12,unit:'wdh',equip:['kh'],desc:'Aufrecht stehen, Hanteln mit Handflächen nach vorn. Unterarme zur Schulter beugen, Ellbogen bleiben ruhig am Körper.'},
-  {name:'Rumänisches Kreuzheben (KH)',regions:['beine','po','ruecken'],reps:10,unit:'wdh',equip:['kh'],desc:'Hanteln vor den Oberschenkeln. Hüfte nach hinten schieben, Hanteln nah an den Beinen bis unter die Knie führen, Rücken gerade, Knie leicht gebeugt.'},
-  {name:'Kurzhantel Thruster',regions:['ganzkoerper','beine','schultern'],reps:10,unit:'wdh',equip:['kh'],desc:'Hanteln auf den Schultern. Tiefe Kniebeuge und aus dem Hochkommen in einer Bewegung über Kopf drücken.'},
-  {name:'Langhantel Kniebeuge',regions:['beine','po'],reps:8,unit:'wdh',equip:['lh'],desc:'Stange auf dem oberen Rücken, Füße schulterbreit. Kontrolliert in die Tiefe, Knie Richtung Zehen, kraftvoll hochdrücken.'},
-  {name:'Langhantel Kreuzheben',regions:['ruecken','beine','po'],reps:8,unit:'wdh',equip:['lh'],desc:'Stange über der Fußmitte, schulterbreiter Griff. Mit geradem Rücken aus Beinen und Hüfte aufrichten, Stange nah am Körper führen.'},
-  {name:'Langhantel Rudern',regions:['ruecken','arme'],reps:10,unit:'wdh',equip:['lh'],desc:'Vorgebeugt mit geradem Rücken. Stange zum unteren Brustbein ziehen, Ellbogen nach hinten, langsam ablassen.'},
-  {name:'Langhantel Schulterdrücken',regions:['schultern','arme'],reps:8,unit:'wdh',equip:['lh'],desc:'Stange vor dem Hals auf den Schultern. Gerade über Kopf drücken, Kopf kurz zurücknehmen, Bauch und Po fest.'},
-  {name:'Langhantel Hip Thrust',regions:['po'],reps:10,unit:'wdh',equip:['lh'],desc:'Oberer Rücken an einer Bank oder dem Sofa, Stange (gepolstert) auf der Hüfte. Becken hochdrücken bis zur geraden Linie, oben Po anspannen.'}
 ];
 const MODES = {
   amrap:{name:'AMRAP',desc:'So viele Runden wie möglich'},
@@ -402,10 +395,13 @@ let exercises = store.get('fa_exercises',null);
 if(!exercises){exercises=[...DEFAULT_EXERCISES,...EQUIP_EXERCISES].map(e=>({...e,id:uid()}));store.set('fa_exercises',exercises);store.set('fa_defv',2)}
 else if(store.get('fa_defv',1)<2){EQUIP_EXERCISES.forEach(d=>{if(!exercises.some(e=>e.name===d.name))exercises.push({...d,id:uid()})});store.set('fa_defv',2)}
 else{exercises.forEach(e=>{if(!e.desc){const d=DEFAULT_EXERCISES.find(x=>x.name===e.name);if(d)e.desc=d.desc}});store.set('fa_exercises',exercises)}
+const VALID_EQ=EQUIP.map(q=>q.id);
+exercises=exercises.filter(e=>(e.equip||[]).every(q=>VALID_EQ.includes(q)));store.set('fa_exercises',exercises);
 const DAYS30=30*864e5;
 let history = store.get('fa_history',[]);
 function pruneHistory(){history=history.filter(h=>Date.now()-new Date(h.date).getTime()<DAYS30);store.set('fa_history',history)}
 pruneHistory();
+config.equip=(config.equip||[]).filter(q=>VALID_EQ.includes(q));
 const saveConfig=()=>store.set('fa_config',config);
 
 /* ===== Helfer ===== */
@@ -791,7 +787,7 @@ function render(p,rem,t){
   $('#timer').className='on '+p.type+(isA?' am':'');
   $('#tPhase').textContent=p.type==='prep'?'Gleich geht’s los':p.type==='rest'?'Pause':p.type==='cool'?'Dehnen':p.label;
   $('#tClock').textContent=fmt(rem);
-  $('#tTotal').textContent='Gesamt noch '+fmt(run.total-t);
+  $('#tTotal').textContent=isA?'':'Gesamt noch '+fmt(run.total-t);
   $('#tBar').style.width=Math.min(100,t/run.total*100)+'%';
   if(isA)return;
   const it=w.items[p.item];
