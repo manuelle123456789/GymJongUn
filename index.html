@@ -263,6 +263,7 @@ nav.tabs button.on{color:var(--accent)}
     </div>
     <p class="muted small" style="margin:10px 0 6px">Regionen (Wdh. = Basiswert für Level „Mittel“)</p>
     <div class="chips" id="newRegions"></div>
+    <div id="stabWrap" style="display:none"><p class="muted small" style="margin:10px 0 6px">Core-Reiz</p><div class="chips" id="newStab"></div></div>
     <div id="coreWrap" style="display:none"><p class="muted small" style="margin:10px 0 6px">Bauch-Reiz</p><div class="chips" id="newCore"></div></div>
     <p class="muted small" style="margin:10px 0 6px">Hilfsmittel (leer = Körpergewicht)</p>
     <div class="chips" id="newEquip"></div>
@@ -333,7 +334,7 @@ nav.tabs button.on{color:var(--accent)}
 const REGIONS = [
   {id:'bauch',name:'Bauch'},{id:'beine',name:'Beine'},{id:'po',name:'Po'},
   {id:'brust',name:'Brust'},{id:'ruecken',name:'Rücken'},{id:'schultern',name:'Schultern'},
-  {id:'arme',name:'Arme'},{id:'ganzkoerper',name:'Ganzkörper'},{id:'cardio',name:'Cardio'}
+  {id:'arme',name:'Arme'},{id:'ganzkoerper',name:'Ganzkörper'},{id:'core',name:'Core-Stabilität'},{id:'cardio',name:'Cardio'}
 ];
 const DEFAULT_EXERCISES = [
   {name:'Crunches',regions:['bauch'],reps:15,unit:'wdh',desc:'Rückenlage, Füße aufgestellt. Schulterblätter mit Bauchkraft vom Boden lösen, Blick schräg nach oben, langsam wieder ablegen. Nicht am Kopf ziehen.'},
@@ -360,19 +361,19 @@ const DEFAULT_EXERCISES = [
 ];
 /* Dehnungen für das Cool-down · sec = Haltezeit (je Seite, wenn side:true) */
 const STRETCHES = [
-  {name:'Kobra',regions:['bauch'],sec:30,cue:'Hüfte am Boden, Brust sanft anheben'},
+  {name:'Kobra',regions:['bauch','core'],sec:30,cue:'Hüfte am Boden, Brust sanft anheben'},
   {name:'Seitdehnung im Stehen',regions:['bauch','ruecken'],sec:20,side:true,cue:'Arm über den Kopf, zur Seite neigen'},
-  {name:'Liegende Drehung',regions:['ruecken','bauch','po'],sec:30,side:true,cue:'Knie zur Seite, Schultern bleiben am Boden'},
+  {name:'Liegende Drehung',regions:['ruecken','bauch','po','core'],sec:30,side:true,cue:'Knie zur Seite, Schultern bleiben am Boden'},
   {name:'Oberschenkel vorne im Stehen',regions:['beine','cardio'],sec:30,side:true,cue:'Ferse zum Po, Knie zeigen nach unten'},
   {name:'Beinrückseite im Sitzen',regions:['beine','ruecken'],sec:40,cue:'Beine gestreckt, mit geradem Rücken nach vorn'},
   {name:'Wade an der Wand',regions:['beine','cardio'],sec:30,side:true,cue:'Hintere Ferse bleibt am Boden'},
   {name:'Hüftbeuger im Ausfallschritt',regions:['beine','po','cardio'],sec:30,side:true,cue:'Hinteres Knie ablegen, Becken nach vorn schieben'},
   {name:'Liegende Taube (Figur 4)',regions:['po','beine'],sec:30,side:true,cue:'Knöchel aufs Knie, Bein zur Brust ziehen'},
-  {name:'Knie zur Brust',regions:['po','ruecken'],sec:30,cue:'In Rückenlage beide Knie umarmen'},
+  {name:'Knie zur Brust',regions:['po','ruecken','core'],sec:30,cue:'In Rückenlage beide Knie umarmen'},
   {name:'Brustdehnung am Türrahmen',regions:['brust','schultern'],sec:30,side:true,cue:'Unterarm an den Rahmen, Oberkörper wegdrehen'},
   {name:'Hände hinter dem Rücken',regions:['brust'],sec:30,cue:'Finger verschränken, Brust öffnen'},
-  {name:'Kindhaltung',regions:['ruecken','ganzkoerper'],sec:40,cue:'Po zu den Fersen, Arme lang nach vorn'},
-  {name:'Katze-Kuh',regions:['ruecken'],sec:30,cue:'Im Vierfüßlerstand langsam rund und hohl'},
+  {name:'Kindhaltung',regions:['ruecken','ganzkoerper','core'],sec:40,cue:'Po zu den Fersen, Arme lang nach vorn'},
+  {name:'Katze-Kuh',regions:['ruecken','core'],sec:30,cue:'Im Vierfüßlerstand langsam rund und hohl'},
   {name:'Arm vor der Brust',regions:['schultern','arme'],sec:20,side:true,cue:'Arm mit der anderen Hand heranziehen'},
   {name:'Nacken seitlich',regions:['schultern'],sec:20,side:true,cue:'Ohr Richtung Schulter, andere Schulter tief'},
   {name:'Trizeps über Kopf',regions:['arme','schultern'],sec:20,side:true,cue:'Ellbogen sanft hinter den Kopf ziehen'},
@@ -408,6 +409,10 @@ const CORE_MAP = {'Crunches':'gerade','V-Ups':'gerade',
   'Unterarmstütz':'tief','Hollow Hold':'tief','Dead Bug':'tief','Kettlebell Dead Bug':'tief',
   'Seitstütz (je Seite)':'anti','Band Pallof Press (je Seite)':'anti','Plank Shoulder Taps':'anti','Kettlebell Suitcase Carry (je Seite)':'anti','Bird Dog':'anti',
   'Mountain Climbers':'ganz','Plank Jacks':'ganz','T-Liegestütze':'ganz','Kickthrough':'ganz','Kettlebell Around the World':'ganz','Turkish Get-up (je Seite)':'ganz','Plank Up-Downs':'ganz'};
+/* Core = Rumpfstabilität, gegliedert nach Anti-Bewegungen */
+const STAB_TYPES = {ext:'Anti-Streckung',rot:'Rotation & Anti-Rotation',lat:'Anti-Seitneigung',hip:'Hüfte & unterer Rücken'};
+const STAB_MAP = {"Unterarmstütz": "ext", "Hollow Hold": "ext", "Dead Bug": "ext", "Kettlebell Dead Bug": "ext", "Bear Crawl": "ext", "Band Pallof Press (je Seite)": "rot", "Plank Shoulder Taps": "rot", "Bird Dog": "rot", "Plank Up-Downs": "rot", "Kettlebell Around the World": "rot", "Turkish Get-up (je Seite)": "rot", "Kettlebell Halo": "rot", "Seitstütz (je Seite)": "lat", "Kettlebell Suitcase Carry (je Seite)": "lat", "Kettlebell Windmill (je Seite)": "lat", "Superman": "hip", "Swimmers": "hip", "Einbeinige Glute Bridge (je Seite)": "hip", "Einbeiniges Kreuzheben (je Seite)": "hip"};
+const CORE_EXERCISES = [{"name": "Body Saw", "regions": ["core", "bauch"], "reps": 10, "unit": "wdh", "equip": [], "desc": "Unterarmstütz. Den ganzen Körper über die Unterarme langsam vor und zurück schieben, Rücken bleibt gerade, kein Hohlkreuz.", "stab": "ext", "core": "tief"}, {"name": "Bärenstand halten", "regions": ["core"], "reps": 30, "unit": "sek", "equip": [], "desc": "Vierfüßlerstand, Knie 2–3 cm über dem Boden anheben und halten. Rücken flach, ruhig atmen.", "stab": "ext"}, {"name": "Hollow Rocks", "regions": ["core", "bauch"], "reps": 15, "unit": "wdh", "equip": [], "desc": "Aus dem Hollow Hold vor und zurück schaukeln wie ein Schaukelstuhl. Unterer Rücken bleibt rund am Boden, Körperspannung halten.", "stab": "ext", "core": "tief", "hard": true}, {"name": "Plank mit Arm- und Beinheben", "regions": ["core"], "reps": 12, "unit": "wdh", "equip": [], "desc": "Hoher Liegestütz. Abwechselnd einen Arm nach vorn oder ein Bein nach hinten anheben, Hüfte bleibt waagerecht.", "stab": "rot"}, {"name": "Bird Dog im Stütz", "regions": ["core"], "reps": 10, "unit": "wdh", "equip": [], "desc": "Hoher Liegestütz. Gegenüberliegenden Arm und Bein gleichzeitig anheben und kurz halten, Seite wechseln. Becken nicht kippen.", "stab": "rot", "hard": true}, {"name": "Seitstütz mit Hüftheben (je Seite)", "regions": ["core", "bauch"], "reps": 10, "unit": "wdh", "equip": [], "desc": "Seitstütz auf dem Unterarm. Hüfte langsam Richtung Boden senken und wieder über die Linie anheben.", "stab": "lat", "core": "anti"}, {"name": "Seitstütz mit Rotation (je Seite)", "regions": ["core"], "reps": 10, "unit": "wdh", "equip": [], "desc": "Seitstütz, oberer Arm zur Decke. Arm unter dem Körper durchfädeln und wieder aufdrehen, Hüfte bleibt oben.", "stab": "rot"}, {"name": "Copenhagen Plank (je Seite)", "regions": ["core", "beine"], "reps": 20, "unit": "sek", "equip": [], "desc": "Seitstütz, oberes Bein auf Sofa oder Stuhl, unteres Bein in der Luft. Halten, Körper gerade. Trainiert auch die Adduktoren.", "stab": "lat", "hard": true}, {"name": "Glute Bridge March", "regions": ["core", "po"], "reps": 12, "unit": "wdh", "equip": [], "desc": "Glute Bridge oben halten und abwechselnd ein Knie zur Brust heben. Becken bleibt gerade, nicht absinken.", "stab": "hip"}, {"name": "Umgekehrter Stütz", "regions": ["core", "po", "arme"], "reps": 30, "unit": "sek", "equip": [], "desc": "Im Sitzen Hände hinter dem Po, Beine gestreckt. Hüfte anheben, bis der Körper eine Linie bildet, halten.", "stab": "hip"}, {"name": "Kettlebell Racked Carry (je Seite)", "regions": ["core"], "reps": 40, "unit": "sek", "equip": ["kettlebell"], "desc": "Kettlebell in der Frontposition an der Schulter tragen und aufrecht gehen. Nicht zur Seite oder nach hinten lehnen.", "stab": "lat"}, {"name": "Kettlebell Overhead Carry (je Seite)", "regions": ["core", "schultern"], "reps": 30, "unit": "sek", "equip": ["kettlebell"], "desc": "Kettlebell mit gestrecktem Arm über Kopf tragen und gehen. Rippen unten, kein Hohlkreuz.", "stab": "lat"}, {"name": "Kettlebell Plank Pull-Through", "regions": ["core"], "reps": 12, "unit": "wdh", "equip": ["kettlebell"], "desc": "Hoher Liegestütz, Kettlebell neben dem Körper. Mit der gegenüberliegenden Hand unter dem Körper durchziehen, Hüfte ruhig.", "stab": "rot"}, {"name": "Kettlebell Plank Row (je Seite)", "regions": ["core", "ruecken"], "reps": 8, "unit": "wdh", "equip": ["kettlebell"], "desc": "Hoher Liegestütz, eine Hand am Kettlebell-Griff. Kettlebell zur Hüfte rudern, ohne dass sich der Körper aufdreht.", "stab": "rot", "hard": true}, {"name": "Kettlebell Holzhacker (je Seite)", "regions": ["core", "bauch"], "reps": 10, "unit": "wdh", "equip": ["kettlebell"], "desc": "Kettlebell diagonal von der Hüfte über die andere Schulter führen und kontrolliert zurück. Bewegung aus dem Rumpf.", "stab": "rot", "core": "schraeg"}, {"name": "Kettlebell Suitcase Deadlift (je Seite)", "regions": ["core", "beine"], "reps": 10, "unit": "wdh", "equip": ["kettlebell"], "desc": "Kettlebell seitlich neben einem Fuß. Mit geradem Rücken einseitig aufheben, ohne zur Seite zu kippen.", "stab": "lat"}, {"name": "Band Holzhacker (je Seite)", "regions": ["core", "bauch"], "reps": 12, "unit": "wdh", "equip": ["band"], "desc": "Band unten befestigt. Diagonal vom Knie über die gegenüberliegende Schulter ziehen, Arme gestreckt, Bewegung aus dem Rumpf.", "stab": "rot", "core": "schraeg"}, {"name": "Band Dead Bug", "regions": ["core", "bauch"], "reps": 10, "unit": "wdh", "equip": ["band"], "desc": "Dead Bug, die Hände halten ein hinter dem Kopf befestigtes Band über der Brust. Unterer Rücken bleibt am Boden.", "stab": "ext", "core": "tief"}, {"name": "Band Seitneigung (je Seite)", "regions": ["core"], "reps": 12, "unit": "wdh", "equip": ["band"], "desc": "Auf einem Bandende stehen, anderes Ende in der Hand. Kontrolliert zur Gegenseite aufrichten und langsam zurück.", "stab": "lat"}, {"name": "Band Überkopfdrücken kniend", "regions": ["core", "schultern"], "reps": 12, "unit": "wdh", "equip": ["band"], "desc": "Aufrecht kniend, Band unter den Knien. Über Kopf drücken, ohne ins Hohlkreuz zu gehen, Po angespannt.", "stab": "ext"}, {"name": "Band Glute Bridge", "regions": ["core", "po"], "reps": 15, "unit": "wdh", "equip": ["band"], "desc": "Band über den Knien. Glute Bridge und oben die Knie gegen das Band nach außen drücken.", "stab": "hip"}];
 const MODES = {
   amrap:{name:'AMRAP',desc:'So viele Runden wie möglich'},
   emom:{name:'EMOM',desc:'Jede Minute eine Übung'},
@@ -441,6 +446,11 @@ if(store.get('fa_defv',1)<3){ // Cardio-Region bei vorhandenen Übungen ergänze
 if(store.get('fa_defv',1)<4){ // 88 neue Übungen ergänzen
   MORE_EXERCISES.forEach(d=>{if(!exercises.some(e=>e.name===d.name))exercises.push({...d,id:uid()})});
   store.set('fa_defv',4);
+}
+if(store.get('fa_defv',1)<5){ // Core-Kategorie: bestehende Übungen zuordnen + neue ergänzen
+  exercises.forEach(e=>{if(STAB_MAP[e.name]){if(!e.regions.includes('core'))e.regions.push('core');if(!e.stab)e.stab=STAB_MAP[e.name]}});
+  CORE_EXERCISES.forEach(d=>{if(!exercises.some(e=>e.name===d.name))exercises.push({...d,id:uid()})});
+  store.set('fa_defv',5);
 }
 exercises.forEach(e=>{if(e.core===undefined&&CORE_MAP[e.name]){e.core=CORE_MAP[e.name]}});
 const VALID_EQ=EQUIP.map(q=>q.id);
@@ -612,7 +622,7 @@ function diversify(pool,key){
 function quotas(k,n){return Array.from({length:k},(_,i)=>Math.floor(n/k)+(i<n%k?1:0))}
 function pickExercises(regions,n){
   const q=quotas(regions.length,n),used=new Set(),groups=regions.map(()=>[]);
-  const poolOf=r=>r==='bauch'?diversify(poolFor(r),e=>e.core):poolFor(r);
+  const poolOf=r=>r==='bauch'?diversify(poolFor(r),e=>e.core):r==='core'?diversify(poolFor(r),e=>e.stab):poolFor(r);
   regions.forEach((r,i)=>{for(const e of poolOf(r)){if(groups[i].length>=q[i])break;if(!used.has(e.id)){used.add(e.id);groups[i].push({e,r})}}});
   // Region hat zu wenige Übungen → mit Übungen der anderen gewählten Regionen auffüllen
   let short=n-groups.reduce((s,g)=>s+g.length,0);
@@ -696,6 +706,7 @@ function swapItem(idx){
   const it=current.items[idx],used=new Set(current.items.map(x=>x.ex.id));
   let free=poolFor(it.reg).filter(e=>!used.has(e.id));
   if(it.reg==='bauch'&&it.ex.core){const same=free.filter(e=>e.core===it.ex.core);if(same.length)free=same}
+  if(it.reg==='core'&&it.ex.stab){const same=free.filter(e=>e.stab===it.ex.stab);if(same.length)free=same}
   const cand=free.length?free:shuffle(exercises.filter(e=>usable(e)&&!used.has(e.id)&&(current.regions.includes('ganzkoerper')||e.regions.some(r=>current.regions.includes(r)))));
   if(!cand.length){toast('Keine weitere passende Übung');return}
   const e=cand[0];current.items[idx]={ex:e,reg:it.reg,reps:(current.mode==='tabata'||current.mode==='zirkel')?null:repsFor(e,current)};
@@ -720,7 +731,7 @@ function renderPlan(){
   $('#planDesc').textContent=reg+' · '+LEVELS[w.level].name+'. '+desc;
   const last=w.planId?history.find(h=>h.planId===w.planId):null,lx=(last&&last.exNotes)||{};
   $('#planLast').innerHTML=last?`<div class="lastres">↻ Letztes Mal (${new Date(last.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}): <b>${resText(last)}</b> in ${fmt(last.done)} min${last.note?`<br><span>📝 ${esc(last.note)}</span>`:''}</div>`:'';
-  $('#planList').innerHTML=w.items.map((it,i)=>exRow({num:i+1,name:it.ex.name,sub:(lx[i]?`<b style="color:var(--accent)">Zuletzt: ${esc(lx[i])}</b> · `:'')+regName(it.reg)+(it.reg==='bauch'&&it.ex.core?' · '+CORE_TYPES[it.ex.core]:'')+(needs(it.ex).length?' · '+needs(it.ex).map(eqName).join(', '):''),right:w.mode==='tabata'?'max.':w.mode==='zirkel'?w.zWork+' s':repText(it.ex,it.reps),desc:it.ex.desc,
+  $('#planList').innerHTML=w.items.map((it,i)=>exRow({num:i+1,name:it.ex.name,sub:(lx[i]?`<b style="color:var(--accent)">Zuletzt: ${esc(lx[i])}</b> · `:'')+regName(it.reg)+(it.reg==='bauch'&&it.ex.core?' · '+CORE_TYPES[it.ex.core]:'')+(it.reg==='core'&&it.ex.stab?' · '+STAB_TYPES[it.ex.stab]:'')+(needs(it.ex).length?' · '+needs(it.ex).map(eqName).join(', '):''),right:w.mode==='tabata'?'max.':w.mode==='zirkel'?w.zWork+' s':repText(it.ex,it.reps),desc:it.ex.desc,
     extra:`<button class="iconbtn" data-swap="${i}" aria-label="Übung tauschen">↻</button>`})).join('');
   bindDesc($('#planList'));
   $$('[data-swap]').forEach(b=>b.onclick=()=>swapItem(+b.dataset.swap));
@@ -1049,13 +1060,13 @@ function renderHistory(){
 }
 
 /* ===== Übungen ===== */
-let newUnit='wdh',newRegs=[],newEq=[],newCore=null,exFilter='all',editId=null;
+let newUnit='wdh',newRegs=[],newEq=[],newCore=null,newStab=null,exFilter='all',editId=null;
 function renderExercises(){
   const cnt=id=>exercises.filter(e=>e.regions.includes(id)).length;
   const list=exercises.filter(e=>exFilter==='all'||e.regions.includes(exFilter)||needs(e).includes(exFilter)||(exFilter==='kg'&&!needs(e).length)).sort((a,b)=>a.name.localeCompare(b.name,'de'));
   $('#exGroups').innerHTML=`<div class="chips" style="margin-top:14px"><button class="chip sm ${exFilter==='all'?'on':''}" data-f="all">Alle (${exercises.length})</button>${REGIONS.map(r=>`<button class="chip sm ${exFilter===r.id?'on':''}" data-f="${r.id}">${r.name} (${cnt(r.id)})</button>`).join('')}</div>
     <div class="chips" style="margin-top:8px"><button class="chip sm ${exFilter==='kg'?'on':''}" data-f="kg">Körpergewicht (${exercises.filter(e=>!needs(e).length).length})</button>${EQUIP.map(q=>`<button class="chip sm ${exFilter===q.id?'on':''}" data-f="${q.id}">${q.name} (${exercises.filter(e=>needs(e).includes(q.id)).length})</button>`).join('')}</div>
-    <div class="card" style="margin-top:12px"><ul class="exlist" id="exUl">${list.length?list.map(e=>exRow({name:e.name,sub:`<span class="rtags">${e.regions.map(id=>`<span class="tag">${regName(id)}</span>`).join('')}${needs(e).map(q=>`<span class="tag" style="color:var(--warn)">${eqName(q)}</span>`).join('')}${e.core&&CORE_TYPES[e.core]?`<span class="tag" style="color:var(--rest)">${CORE_TYPES[e.core]}</span>`:''}${e.hard?'<span class="tag" style="color:#ff8a8a">anspruchsvoll</span>':''}</span>`,
+    <div class="card" style="margin-top:12px"><ul class="exlist" id="exUl">${list.length?list.map(e=>exRow({name:e.name,sub:`<span class="rtags">${e.regions.map(id=>`<span class="tag">${regName(id)}</span>`).join('')}${needs(e).map(q=>`<span class="tag" style="color:var(--warn)">${eqName(q)}</span>`).join('')}${e.core&&CORE_TYPES[e.core]?`<span class="tag" style="color:var(--rest)">${CORE_TYPES[e.core]}</span>`:''}${e.stab&&STAB_TYPES[e.stab]&&e.regions.includes('core')?`<span class="tag" style="color:#c9a0ff">${STAB_TYPES[e.stab]}</span>`:''}${e.hard?'<span class="tag" style="color:#ff8a8a">anspruchsvoll</span>':''}</span>`,
       right:`<span class="muted small" style="font-weight:500">${repText(e,e.reps)}</span>`,desc:e.desc,extra:`<button class="iconbtn" data-edit="${e.id}" aria-label="Bearbeiten">✎</button><button class="iconbtn" data-dex="${e.id}" aria-label="Löschen">✕</button>`})).join(''):'<li class="muted small">Noch keine Übungen</li>'}</ul></div>
     <p class="muted small">Tippe auf eine Übung, um die Erklärung zu sehen.</p>`;
   $$('[data-f]').forEach(b=>b.onclick=()=>{exFilter=b.dataset.f;renderExercises()});
@@ -1073,6 +1084,9 @@ function renderExercises(){
 }
 $$('#newUnit button').forEach(b=>b.onclick=()=>{newUnit=b.dataset.u;$$('#newUnit button').forEach(x=>x.classList.toggle('on',x===b))});
 function renderCoreChips(){
+  $('#stabWrap').style.display=newRegs.includes('core')?'block':'none';
+  $('#newStab').innerHTML=Object.entries(STAB_TYPES).map(([k,v])=>`<button class="chip sm ${newStab===k?'on':''}" data-ns="${k}">${v}</button>`).join('');
+  $$('#newStab .chip').forEach(c=>c.onclick=()=>{newStab=newStab===c.dataset.ns?null:c.dataset.ns;renderCoreChips()});
   $('#coreWrap').style.display=newRegs.includes('bauch')?'block':'none';
   $('#newCore').innerHTML=Object.entries(CORE_TYPES).map(([k,v])=>`<button class="chip sm ${newCore===k?'on':''}" data-nc="${k}">${v}</button>`).join('');
   $$('#newCore .chip').forEach(c=>c.onclick=()=>{newCore=newCore===c.dataset.nc?null:c.dataset.nc;renderCoreChips()});
@@ -1081,13 +1095,13 @@ function setUnit(u){newUnit=u;$$('#newUnit button').forEach(x=>x.classList.toggl
 function startEdit(id){
   const e=exercises.find(x=>x.id===id);if(!e)return;
   editId=id;$('#newName').value=e.name;$('#newDesc').value=e.desc||'';$('#newReps').value=e.reps;setUnit(e.unit);
-  newRegs=[...e.regions];newEq=[...(e.equip||[])];newCore=e.core||null;
+  newRegs=[...e.regions];newEq=[...(e.equip||[])];newCore=e.core||null;newStab=e.stab||null;
   $('#formHead').textContent='Übung bearbeiten';$('#btnAddEx').textContent='✓ Speichern';$('#btnCancelEdit').style.display='block';
   $('#exForm').style.borderColor='var(--accent)';
   renderExercises();$('#formHead').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function resetForm(){
-  editId=null;$('#newName').value='';$('#newDesc').value='';$('#newReps').value=12;setUnit('wdh');newEq=[];newRegs=[];newCore=null;
+  editId=null;$('#newName').value='';$('#newDesc').value='';$('#newReps').value=12;setUnit('wdh');newEq=[];newRegs=[];newCore=null;newStab=null;
   $('#formHead').textContent='Übung hinzufügen';$('#btnAddEx').textContent='+ Hinzufügen';$('#btnCancelEdit').style.display='none';$('#exForm').style.borderColor='';
 }
 $('#btnCancelEdit').onclick=()=>{resetForm();renderExercises()};
@@ -1096,7 +1110,7 @@ $('#btnAddEx').onclick=()=>{
   if(!name){toast('Bitte einen Namen eingeben');return}
   if(!newRegs.length){toast('Bitte mindestens eine Region wählen');return}
   if(!(reps>0)){toast('Bitte gültige Anzahl');return}
-  const data={name,regions:[...newRegs],reps,unit:newUnit,equip:[...newEq],desc:$('#newDesc').value.trim(),core:newRegs.includes('bauch')?newCore:null};
+  const data={name,regions:[...newRegs],reps,unit:newUnit,equip:[...newEq],desc:$('#newDesc').value.trim(),core:newRegs.includes('bauch')?newCore:null,stab:newRegs.includes('core')?newStab:null};
   const wasEdit=!!editId;
   if(editId){const e=exercises.find(x=>x.id===editId);if(e)Object.assign(e,data)}
   else exercises.push({id:uid(),...data});
@@ -1104,7 +1118,7 @@ $('#btnAddEx').onclick=()=>{
   resetForm();renderExercises();toast(wasEdit?'Änderungen gespeichert':'Übung hinzugefügt');
 };
 $('#btnResetEx').onclick=()=>modal(`<h3>Beispielübungen wiederherstellen?</h3><p class="muted">Deine eigenen Änderungen gehen verloren.</p><button class="btn danger" data-a="y">Wiederherstellen</button><button class="btn ghost" data-a="n">Abbrechen</button>`,a=>{
-  if(a==='y'){exercises=[...DEFAULT_EXERCISES,...EQUIP_EXERCISES,...MORE_EXERCISES].map(e=>({...e,id:uid()}));store.set('fa_exercises',exercises);renderExercises()}});
+  if(a==='y'){exercises=[...DEFAULT_EXERCISES,...EQUIP_EXERCISES,...MORE_EXERCISES,...CORE_EXERCISES].map(e=>({...e,id:uid()}));exercises.forEach(e=>{if(STAB_MAP[e.name]){if(!e.regions.includes('core'))e.regions.push('core');e.stab=STAB_MAP[e.name]}});store.set('fa_exercises',exercises);renderExercises()}});
 
 /* ===== Einstellungen ===== */
 function renderSettings(){
@@ -1202,7 +1216,7 @@ $('#modeInfo').onclick=()=>modal(`<h3>Die Modi kurz erklärt</h3><ul class="minf
 </ul><button class="btn primary" data-a="ok">Verstanden</button>`);
 renderCreate();
 /* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
-const APP_VERSION='v22';
+const APP_VERSION='v24';
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
