@@ -244,7 +244,7 @@ nav.tabs button.on{color:var(--accent)}
 <section class="view" id="v-history"><div class="wrap">
   <h1>Verlauf</h1>
   <div class="stats" id="stats"></div>
-  <h2>Letzte 30 Tage</h2>
+  <h2>Letzte 90 Tage</h2>
   <div id="histList"></div>
 </div></section>
 
@@ -288,7 +288,7 @@ nav.tabs button.on{color:var(--accent)}
     <input type="file" id="importFile" accept=".json,application/json,text/plain" style="display:none">
   </div>
   <button class="btn danger" id="btnClearHist" style="margin-top:12px">Verlauf löschen</button>
-  <p class="muted small" style="margin-top:20px">App-Version <b id="appVer"></b> · Alle Daten bleiben nur auf diesem Gerät. Trainings, die älter als 30 Tage sind, werden automatisch entfernt.</p>
+  <p class="muted small" style="margin-top:20px">App-Version <b id="appVer"></b> · Alle Daten bleiben nur auf diesem Gerät. Trainings, die älter als 90 Tage sind, werden automatisch entfernt.</p>
 </div></section>
 
 <!-- ===== Timer ===== -->
@@ -445,9 +445,9 @@ if(store.get('fa_defv',1)<4){ // 88 neue Übungen ergänzen
 exercises.forEach(e=>{if(e.core===undefined&&CORE_MAP[e.name]){e.core=CORE_MAP[e.name]}});
 const VALID_EQ=EQUIP.map(q=>q.id);
 exercises=exercises.filter(e=>(e.equip||[]).every(q=>VALID_EQ.includes(q)));store.set('fa_exercises',exercises);
-const DAYS30=30*864e5;
+const DAYS90=90*864e5;
 let history = store.get('fa_history',[]);
-function pruneHistory(){history=history.filter(h=>Date.now()-new Date(h.date).getTime()<DAYS30);store.set('fa_history',history)}
+function pruneHistory(){history=history.filter(h=>Date.now()-new Date(h.date).getTime()<DAYS90);store.set('fa_history',history)}
 pruneHistory();
 config.equip=(config.equip||[]).filter(q=>VALID_EQ.includes(q));
 const saveConfig=()=>store.set('fa_config',config);
@@ -1023,15 +1023,15 @@ function editNotes(id,after){
 }
 function closeTimer(){clearInterval(ticker);if(run&&!run.done)cancelAudio();run=null;unlockScreen();try{silentEl&&silentEl.pause()}catch(e){}$('#timer').className=''}
 
-/* ===== Verlauf (30 Tage) ===== */
+/* ===== Verlauf (90 Tage) ===== */
 function renderHistory(){
   pruneHistory();
   const wk=Date.now()-7*864e5;
   const week=history.filter(h=>new Date(h.date).getTime()>=wk);
-  $('#stats').innerHTML=`<div class="card"><b>${history.length}</b><span>Trainings (30 T.)</span></div>
+  $('#stats').innerHTML=`<div class="card"><b>${history.length}</b><span>Trainings (90 T.)</span></div>
     <div class="card"><b>${week.length}</b><span>letzte 7 Tage</span></div>
-    <div class="card"><b>${Math.round(history.reduce((s,h)=>s+h.done,0)/60)}</b><span>Minuten (30 T.)</span></div>`;
-  if(!history.length){$('#histList').innerHTML='<div class="empty">Noch keine Trainings in den letzten 30 Tagen.</div>';return}
+    <div class="card"><b>${Math.round(history.reduce((s,h)=>s+h.done,0)/60)}</b><span>Minuten (90 T.)</span></div>`;
+  if(!history.length){$('#histList').innerHTML='<div class="empty">Noch keine Trainings in den letzten 90 Tagen.</div>';return}
   $('#histList').innerHTML=history.map(h=>{
     const d=new Date(h.date);
     const res=resText(h),xn=h.exNotes||{};
@@ -1202,7 +1202,7 @@ $('#modeInfo').onclick=()=>modal(`<h3>Die Modi kurz erklärt</h3><ul class="minf
 </ul><button class="btn primary" data-a="ok">Verstanden</button>`);
 renderCreate();
 /* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
-const APP_VERSION='v20';
+const APP_VERSION='v22';
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
