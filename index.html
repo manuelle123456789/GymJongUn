@@ -179,10 +179,12 @@ nav.tabs button.on{color:var(--accent)}
 <section class="view on" id="v-create"><div class="wrap">
   <div class="brand">💪 GymJongUn</div>
   <h1>Training erstellen</h1>
+  <div class="seg" id="kindSeg"><button data-k="0">Mit Übungen</button><button data-k="1">Nur Timer</button></div>
   <h2>1 · Modus</h2>
   <div class="grid3 modes" id="modes"></div>
   <h2 id="timeHead">2 · Zeit</h2>
   <div class="card" id="timeBox"></div>
+  <div id="exSections">
   <h2>3 · Anzahl Übungen</h2>
   <div class="card"><div class="row between"><span class="val" id="lblEx"></span><span class="muted small" id="lblSplit" style="text-align:right"></span></div><div id="slExWrap"></div></div>
   <h2>4 · Körperregionen</h2>
@@ -192,6 +194,7 @@ nav.tabs button.on{color:var(--accent)}
   <p class="muted small" id="equipHint" style="margin:8px 0 0"></p>
   <h2>6 · Level</h2>
   <div class="seg" id="levels"></div>
+  </div>
   <p class="muted small" id="summary" style="margin-top:18px"></p>
 </div>
 <div class="sticky"><div class="inner"><button class="btn primary" id="btnCreate">Training erstellen</button></div></div>
@@ -389,7 +392,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 
-let config = Object.assign({mode:'amrap',minutes:20,emomInt:60,exCount:6,equip:[],tabRounds:8,tabWork:20,tabRest:10,regions:['bauch','beine'],level:'mit'}, store.get('fa_config',{}));
+let config = Object.assign({mode:'amrap',minutes:20,emomInt:60,exCount:6,equip:[],timerOnly:false,tabRounds:8,tabWork:20,tabRest:10,regions:['bauch','beine'],level:'mit'}, store.get('fa_config',{}));
 let settings = Object.assign({sound:true,volume:.8,vibrate:true,half:true,last5:'interval',phaseSignal:true,prep:10}, store.get('fa_settings',{}));
 let exercises = store.get('fa_exercises',null);
 if(!exercises){exercises=[...DEFAULT_EXERCISES,...EQUIP_EXERCISES].map(e=>({...e,id:uid()}));store.set('fa_exercises',exercises);store.set('fa_defv',2)}
@@ -450,6 +453,9 @@ $$('nav.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.v));
 /* ===== Erstellen ===== */
 let emomOpen=false;
 function renderCreate(){
+  $$('#kindSeg button').forEach(b=>{b.classList.toggle('on',+b.dataset.k===(config.timerOnly?1:0));
+    b.onclick=()=>{config.timerOnly=b.dataset.k==='1';saveConfig();renderCreate()}});
+  $('#exSections').style.display=config.timerOnly?'none':'block';
   $('#modes').innerHTML=Object.entries(MODES).map(([k,m])=>`<button class="mode ${config.mode===k?'on':''}" data-m="${k}"><b>${m.name}</b><span>${m.desc}</span></button>`).join('');
   $$('#modes .mode').forEach(b=>b.onclick=()=>{config.mode=b.dataset.m;saveConfig();renderCreate()});
   $('#timeHead').textContent=config.mode==='tabata'?'2 · Runden & Intervalle':'2 · Zeit';
@@ -514,7 +520,9 @@ function updateCreate(){
   const q=quotas(config.regions.length,config.exCount);
   set('lblSplit',regNames.length?regNames.map((n,i)=>`${n} ${q[i]}`).join(' · '):'');
   $('#summary').textContent=regNames.length?`${MODES[config.mode].name} · ${timeText(config)} · ${regNames.join(' + ')} · ${config.exCount} Übungen${config.equip.length?' · mit '+config.equip.map(eqName).join(', '):''} · ${LEVELS[config.level].name}`:'Wähle mindestens eine Körperregion.';
-  $('#btnCreate').disabled=!regNames.length;
+  $('#btnCreate').disabled=!config.timerOnly&&!regNames.length;
+  $('#btnCreate').textContent=config.timerOnly?'▶ Timer starten':'Training erstellen';
+  if(config.timerOnly)$('#summary').textContent=`${MODES[config.mode].name} · ${timeText(config)} · nur Timer, Übungen frei nach Wahl`;
 }
 
 /* ===== Generator ===== */
@@ -592,7 +600,13 @@ function buildCool(stretches){
 
 /* ===== Plan ===== */
 let current=null;
+function buildTimerOnly(c){
+  const w={id:uid(),timerOnly:true,mode:c.mode,level:c.level,regions:[],minutes:c.minutes,emomInt:c.emomInt,
+    tabRounds:c.tabRounds,tabWork:c.tabWork,tabRest:c.tabRest,items:[{ex:{name:'',desc:''},reps:null}],cool:pickStretches(['ganzkoerper'])};
+  buildPhases(w);return w;
+}
 $('#btnCreate').onclick=()=>{
+  if(config.timerOnly){current=buildTimerOnly(config);startRun(current);return}
   current=buildWorkout(config);
   if(!current.items.length){toast('Keine Übungen für diese Regionen');return}
   renderPlan();show('v-plan');
@@ -636,7 +650,7 @@ let coolFor=null;
 function showCool(w){
   coolFor=w;
   const reg=w.regions.map(id=>REGIONS.find(r=>r.id===id).name).join(' + ');
-  $('#coolDesc').textContent=`Passend zu ${reg} · ca. ${fmtMin(stretchDur(w.cool))}`;
+  $('#coolDesc').textContent=`${w.timerOnly?'Allgemeines Ganzkörper-Cool-down':'Passend zu '+reg} · ca. ${fmtMin(stretchDur(w.cool))}`;
   $('#coolList').innerHTML=w.cool.map((s,i)=>`<li><span class="num">${i+1}</span><span class="name">${esc(s.name)}<small>${esc(s.cue)}</small></span><span class="reps">${s.sec} s${s.side?'<br><span class="small muted">je Seite</span>':''}</span></li>`).join('');
   show('v-cool');
 }
@@ -753,10 +767,11 @@ function startRun(w){
   run={w,phases,total:c,prep,startedAt:Date.now(),pausedMs:0,paused:null,phase:-1,rounds:0,done:false,nodes:[],evIdx:0};
   run.events=signalEvents(run);
   const isA=w.mode==='amrap';
-  $('#timer').className='on prep'+(isA?' am':'');
-  $('#tMode').textContent=w.mode==='cool'?'Cool-down':MODES[w.mode].name+' · '+LEVELS[w.level].name;
+  const to=!!w.timerOnly;
+  $('#timer').className='on prep'+(isA&&!to?' am':'');
+  $('#tMode').textContent=w.mode==='cool'?'Cool-down':MODES[w.mode].name+' · '+(to?'Nur Timer':LEVELS[w.level].name);
   $('#tSingle').style.display=isA?'none':'block';
-  $('#tList').style.display=isA?'block':'none';
+  $('#tList').style.display=isA&&!to?'block':'none';
   $('#tCounter').style.display=isA?'flex':'none';
   if(isA){$('#tListUl').innerHTML=w.items.map((it,i)=>exRow({num:i+1,name:it.ex.name,right:repText(it.ex,it.reps),desc:it.ex.desc})).join('');bindDesc($('#tListUl'))}
   $('#tExDesc').classList.remove('on');
@@ -784,12 +799,20 @@ function tick(){
 }
 function render(p,rem,t){
   const w=run.w,isA=w.mode==='amrap';
-  $('#timer').className='on '+p.type+(isA?' am':'');
+  $('#timer').className='on '+p.type+(isA&&!w.timerOnly?' am':'');
   $('#tPhase').textContent=p.type==='prep'?'Gleich geht’s los':p.type==='rest'?'Pause':p.type==='cool'?'Dehnen':p.label;
   $('#tClock').textContent=fmt(rem);
   $('#tTotal').textContent=isA?'':'Gesamt noch '+fmt(run.total-t);
   $('#tBar').style.width=Math.min(100,t/run.total*100)+'%';
   if(isA)return;
+  if(w.timerOnly){
+    const N=w.mode==='emom'?emomRounds(w):w.tabRounds;
+    $('#tEx').textContent=p.type==='work'?(w.mode==='emom'?'Übung ausführen':'Belastung'):p.type==='rest'?'Pause':'Bereit machen';
+    $('#tReps').textContent='';$('#tExDesc').classList.remove('on');$('#tExDesc').textContent='';
+    $('#tNext').textContent=p.type==='work'&&p.round===N?'Letzte Runde!':'';
+    $('#tRounds').innerHTML=p.type==='prep'?'':`Runde <b>${p.round}</b> / ${N}`;
+    return;
+  }
   const it=w.items[p.item];
   const nx=run.phases.slice(run.phase+1).find(x=>x.type!=='rest');
   let exn=it.ex.name,reps='',next='',rounds='';
@@ -838,10 +861,10 @@ function finish(complete){
   }
   const doneWork=run.phases.filter(x=>x.type==='work'&&x.start+x.dur<=t+.01).length;
   const detail=w.mode==='emom'?`alle ${fmtInt(w.emomInt)}`:w.mode==='tabata'?`${w.tabRounds} × ${w.tabWork}/${w.tabRest} s`:'';
-  const entry={id:w.id+uid(),date:new Date().toISOString(),mode:w.mode,level:w.level,regions:w.regions,detail,
+  const entry={id:w.id+uid(),timerOnly:!!w.timerOnly,date:new Date().toISOString(),mode:w.mode,level:w.level,regions:w.regions,detail,
     planned:w.total,done:Math.max(0,Math.round(t-run.prep)),complete,
     rounds:w.mode==='amrap'?run.rounds:doneWork,ofRounds:w.mode==='emom'?emomRounds(w):w.mode==='tabata'?w.tabRounds:null,
-    exercises:w.items.map(i=>i.ex.name+(i.reps?` (${repText(i.ex,i.reps)})`:''))};
+    exercises:w.timerOnly?[]:w.items.map(i=>i.ex.name+(i.reps?` (${repText(i.ex,i.reps)})`:''))};
   const saved=entry.done>0;
   if(saved){history.unshift(entry);store.set('fa_history',history)}
   const res=()=>w.mode==='amrap'?'':`${entry.rounds} von ${entry.ofRounds} Runden`;
@@ -876,7 +899,7 @@ function renderHistory(){
       <div class="row between"><div><span class="tag mode">${MODES[h.mode].name}</span>${h.detail?`<span class="tag">${esc(h.detail)}</span>`:''}<span class="tag">${LEVELS[h.level]?.name||''}</span>${h.complete?'':'<span class="tag" style="color:var(--warn)">abgebrochen</span>'}</div>
       <button class="iconbtn" data-del="${h.id}" aria-label="Löschen">✕</button></div>
       <div style="margin-top:8px;font-weight:700">${d.toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'})} · ${fmt(h.done)} min · ${res}</div>
-      <div class="muted small" style="margin-top:4px">${h.regions.map(id=>REGIONS.find(r=>r.id===id)?.name).join(' + ')}</div>
+      <div class="muted small" style="margin-top:4px">${h.timerOnly?'Nur Timer':h.regions.map(id=>REGIONS.find(r=>r.id===id)?.name).join(' + ')}</div>
       <div class="muted small" style="margin-top:4px">${h.exercises.map(esc).join(' · ')}</div></div>`}).join('');
   $$('[data-del]').forEach(b=>b.onclick=()=>{history=history.filter(h=>h.id!==b.dataset.del);store.set('fa_history',history);renderHistory()});
 }
