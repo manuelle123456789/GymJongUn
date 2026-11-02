@@ -434,7 +434,7 @@ const $=s=>document.querySelector(s);
 const $$=s=>document.querySelectorAll(s);
 
 let config = Object.assign({mode:'amrap',minutes:20,emomInt:60,exCount:6,equip:[],timerOnly:false,zWork:45,zChange:15,zRounds:3,zRest:60,tabRounds:8,tabWork:20,tabRest:10,regions:['bauch','beine'],level:'mit'}, store.get('fa_config',{}));
-let settings = Object.assign({sound:true,volume:.8,vibrate:true,half:true,halfRound:true,last5:'interval',phaseSignal:true,prep:10}, store.get('fa_settings',{}));
+let settings = Object.assign({sound:true,volume:.8,vibrate:true,half:true,halfRound:true,mixMusic:true,last5:'interval',phaseSignal:true,prep:10}, store.get('fa_settings',{}));
 let exercises = store.get('fa_exercises',null);
 if(!exercises){exercises=[...DEFAULT_EXERCISES,...EQUIP_EXERCISES,...MORE_EXERCISES].map(e=>({...e,id:uid()}));store.set('fa_exercises',exercises);store.set('fa_defv',4)}
 else if(store.get('fa_defv',1)<2){EQUIP_EXERCISES.forEach(d=>{if(!exercises.some(e=>e.name===d.name))exercises.push({...d,id:uid()})});store.set('fa_defv',2)}
@@ -766,9 +766,15 @@ function silentAudio(){
   return silentEl;
 }
 function ensureAudio(){
-  // Stille Endlos-Wiedergabe schaltet iOS auf „Medien“ → Töne auch bei aktivem Stummschalter
-  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
-  try{const a=silentAudio();const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+  if(settings.mixMusic){
+    // Musik-Modus: Töne mischen sich mit Spotify/Hörbuch (iOS: Stummschalter muss aus sein)
+    try{if(navigator.audioSession)navigator.audioSession.type='ambient'}catch(e){}
+    try{silentEl&&silentEl.pause()}catch(e){}
+  }else{
+    // Medien-Modus: Töne auch bei aktivem Stummschalter, stoppt aber andere Audio-Apps
+    try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
+    try{const a=silentAudio();const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{})}catch(e){}
+  }
   try{
     if(!actx){actx=new (window.AudioContext||window.webkitAudioContext)();
       actx.onstatechange=()=>{if(actx.state==='running'&&run&&!run.paused&&!run.done)scheduleAudio()}}
@@ -1125,6 +1131,7 @@ function renderSettings(){
   const sw=(k,label,sub)=>`<label class="toggle"><span>${label}${sub?`<br><span class="muted small">${sub}</span>`:''}</span><span class="sw"><input type="checkbox" data-s="${k}" ${settings[k]?'checked':''}><i></i></span></label>`;
   $('#setBox').innerHTML=
     sw('sound','Töne')+
+    sw('mixMusic','Musik / Hörbuch nebenbei','An: Spotify & Co. laufen weiter, Töne kommen darüber – Stummschalter muss aus sein. Aus: Töne auch im Stumm-Modus, stoppt aber laufende Musik.')+
     `<div class="toggle" style="display:block"><div class="row between"><span>Lautstärke</span><span class="muted" id="lblVol"></span></div>${sliderHTML('slVol')}</div>`+
     sw('vibrate','Vibration',canVibrate()?'':'auf diesem Gerät nicht verfügbar')+
     sw('phaseSignal','Signal bei Intervallwechsel','neue Runde, Start und Pause')+
@@ -1216,7 +1223,7 @@ $('#modeInfo').onclick=()=>modal(`<h3>Die Modi kurz erklärt</h3><ul class="minf
 </ul><button class="btn primary" data-a="ok">Verstanden</button>`);
 renderCreate();
 /* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
-const APP_VERSION='v24';
+const APP_VERSION='v25';
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
