@@ -1,5 +1,5 @@
 // Offline-Cache. Bei jeder Änderung an der App die Versionsnummer erhöhen.
-const CACHE = 'gymjongun-v25';
+const CACHE = 'gymjongun-v26';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

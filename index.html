@@ -217,7 +217,7 @@ nav.tabs button.on{color:var(--accent)}
 
 <!-- ===== Plan ===== -->
 <section class="view" id="v-plan"><div class="wrap">
-  <div class="row between"><button class="chip sm" id="btnBack">← Zurück</button><button class="chip sm" id="btnShuffle">↻ Neu mischen</button></div>
+  <div class="row between"><button class="chip sm" id="btnBack">← Zurück</button><div class="row"><button class="chip sm" id="btnOrder">⇅ Reihenfolge</button><button class="chip sm" id="btnShuffle">↻ Neu mischen</button></div></div>
   <h1 id="planTitle" style="margin-top:16px"></h1>
   <p class="muted" id="planDesc" style="margin-top:-8px"></p>
   <div id="planLast"></div>
@@ -361,26 +361,26 @@ const DEFAULT_EXERCISES = [
 ];
 /* Dehnungen für das Cool-down · sec = Haltezeit (je Seite, wenn side:true) */
 const STRETCHES = [
-  {name:'Kobra',regions:['bauch','core'],sec:30,cue:'Hüfte am Boden, Brust sanft anheben'},
-  {name:'Seitdehnung im Stehen',regions:['bauch','ruecken'],sec:20,side:true,cue:'Arm über den Kopf, zur Seite neigen'},
-  {name:'Liegende Drehung',regions:['ruecken','bauch','po','core'],sec:30,side:true,cue:'Knie zur Seite, Schultern bleiben am Boden'},
-  {name:'Oberschenkel vorne im Stehen',regions:['beine','cardio'],sec:30,side:true,cue:'Ferse zum Po, Knie zeigen nach unten'},
-  {name:'Beinrückseite im Sitzen',regions:['beine','ruecken'],sec:40,cue:'Beine gestreckt, mit geradem Rücken nach vorn'},
-  {name:'Wade an der Wand',regions:['beine','cardio'],sec:30,side:true,cue:'Hintere Ferse bleibt am Boden'},
-  {name:'Hüftbeuger im Ausfallschritt',regions:['beine','po','cardio'],sec:30,side:true,cue:'Hinteres Knie ablegen, Becken nach vorn schieben'},
-  {name:'Liegende Taube (Figur 4)',regions:['po','beine'],sec:30,side:true,cue:'Knöchel aufs Knie, Bein zur Brust ziehen'},
-  {name:'Knie zur Brust',regions:['po','ruecken','core'],sec:30,cue:'In Rückenlage beide Knie umarmen'},
-  {name:'Brustdehnung am Türrahmen',regions:['brust','schultern'],sec:30,side:true,cue:'Unterarm an den Rahmen, Oberkörper wegdrehen'},
-  {name:'Hände hinter dem Rücken',regions:['brust'],sec:30,cue:'Finger verschränken, Brust öffnen'},
-  {name:'Kindhaltung',regions:['ruecken','ganzkoerper','core'],sec:40,cue:'Po zu den Fersen, Arme lang nach vorn'},
-  {name:'Katze-Kuh',regions:['ruecken','core'],sec:30,cue:'Im Vierfüßlerstand langsam rund und hohl'},
-  {name:'Arm vor der Brust',regions:['schultern','arme'],sec:20,side:true,cue:'Arm mit der anderen Hand heranziehen'},
-  {name:'Nacken seitlich',regions:['schultern'],sec:20,side:true,cue:'Ohr Richtung Schulter, andere Schulter tief'},
-  {name:'Trizeps über Kopf',regions:['arme','schultern'],sec:20,side:true,cue:'Ellbogen sanft hinter den Kopf ziehen'},
-  {name:'Unterarm & Bizeps',regions:['arme','brust'],sec:20,side:true,cue:'Arm gestreckt, Finger sanft nach hinten'},
-  {name:'Herabschauender Hund',regions:['ganzkoerper','beine','schultern','cardio'],sec:30,cue:'Fersen Richtung Boden, Rücken lang'}
+  {name:'Kobra',regions:['bauch','core'],sec:45,cue:'Hüfte am Boden, Brust sanft anheben'},
+  {name:'Seitdehnung im Stehen',regions:['bauch','ruecken'],sec:30,side:true,cue:'Arm über den Kopf, zur Seite neigen'},
+  {name:'Liegende Drehung',regions:['ruecken','bauch','po','core'],sec:45,side:true,cue:'Knie zur Seite, Schultern bleiben am Boden'},
+  {name:'Oberschenkel vorne im Stehen',regions:['beine','cardio'],sec:45,side:true,cue:'Ferse zum Po, Knie zeigen nach unten'},
+  {name:'Beinrückseite im Sitzen',regions:['beine','ruecken'],sec:60,cue:'Beine gestreckt, mit geradem Rücken nach vorn'},
+  {name:'Wade an der Wand',regions:['beine','cardio'],sec:45,side:true,cue:'Hintere Ferse bleibt am Boden'},
+  {name:'Hüftbeuger im Ausfallschritt',regions:['beine','po','cardio'],sec:45,side:true,cue:'Hinteres Knie ablegen, Becken nach vorn schieben'},
+  {name:'Liegende Taube (Figur 4)',regions:['po','beine'],sec:45,side:true,cue:'Knöchel aufs Knie, Bein zur Brust ziehen'},
+  {name:'Knie zur Brust',regions:['po','ruecken','core'],sec:45,cue:'In Rückenlage beide Knie umarmen'},
+  {name:'Brustdehnung am Türrahmen',regions:['brust','schultern'],sec:45,side:true,cue:'Unterarm an den Rahmen, Oberkörper wegdrehen'},
+  {name:'Hände hinter dem Rücken',regions:['brust'],sec:45,cue:'Finger verschränken, Brust öffnen'},
+  {name:'Kindhaltung',regions:['ruecken','ganzkoerper','core'],sec:60,cue:'Po zu den Fersen, Arme lang nach vorn'},
+  {name:'Katze-Kuh',regions:['ruecken','core'],sec:45,cue:'Im Vierfüßlerstand langsam rund und hohl'},
+  {name:'Arm vor der Brust',regions:['schultern','arme'],sec:30,side:true,cue:'Arm mit der anderen Hand heranziehen'},
+  {name:'Nacken seitlich',regions:['schultern'],sec:30,side:true,cue:'Ohr Richtung Schulter, andere Schulter tief'},
+  {name:'Trizeps über Kopf',regions:['arme','schultern'],sec:30,side:true,cue:'Ellbogen sanft hinter den Kopf ziehen'},
+  {name:'Unterarm & Bizeps',regions:['arme','brust'],sec:30,side:true,cue:'Arm gestreckt, Finger sanft nach hinten'},
+  {name:'Herabschauender Hund',regions:['ganzkoerper','beine','schultern','cardio'],sec:45,cue:'Fersen Richtung Boden, Rücken lang'}
 ];
-const BREATH = {name:'Tiefe Bauchatmung',regions:[],sec:60,cue:'Rückenlage · 4 s ein, 6 s aus'};
+const BREATH = {name:'Tiefe Bauchatmung',regions:[],sec:90,cue:'Rückenlage · 4 s ein, 6 s aus'};
 
 const EQUIP = [
   {id:'kettlebell',name:'Kettlebell'},{id:'band',name:'Trainingsband'},{id:'seil',name:'Springseil'}
@@ -606,7 +606,9 @@ const eqName=id=>EQUIP.find(q=>q.id===id)?.name||id;
 /* Nur Übungen, für die die Hilfsmittel da sind. Übungen mit den gewählten Hilfsmitteln kommen zuerst. */
 function poolFor(r){
   const ok=exercises.filter(usable);
-  const order=l=>[...shuffle(l.filter(e=>needs(e).length)),...shuffle(l.filter(e=>!needs(e).length))];
+  // Hilfsmittel- und freie Übungen im Wechsel → ausgewogen statt nur Kettlebell
+  const order=l=>{const eq=shuffle(l.filter(e=>needs(e).length)),bw=shuffle(l.filter(e=>!needs(e).length)),out=[];
+    const eqFirst=Math.random()<.5;while(eq.length||bw.length){const [x,y]=eqFirst?[eq,bw]:[bw,eq];if(x.length)out.push(x.shift());if(y.length)out.push(y.shift())}return out};
   if(r==='ganzkoerper'){const gk=ok.filter(e=>e.regions.includes('ganzkoerper'));return [...order(gk),...order(ok.filter(e=>!gk.includes(e)))]}
   return order(ok.filter(e=>e.regions.includes(r)));
 }
@@ -614,15 +616,24 @@ function poolFor(r){
 /* Pool so umsortieren, dass aufeinanderfolgende Übungen aus verschiedenen Reiz-Gruppen kommen */
 function diversify(pool,key){
   const groups={};pool.forEach(e=>{const g=key(e)||'_';(groups[g]=groups[g]||[]).push(e)});
-  const order=shuffle(Object.keys(groups).filter(g=>g!=='_'));if(groups._)order.push('_');
+  const order=Object.keys(groups).filter(g=>g!=='_');if(groups._)order.push('_'); // Reihenfolge wie im (bereits gemischten) Pool
   const out=[];let i=0;
   while(out.length<pool.length){const g=groups[order[i%order.length]];if(g.length)out.push(g.shift());i++;if(i>pool.length*order.length+order.length)break}
   return out;
 }
+/* Bewegungsmuster: verhindert z. B. drei Liegestütz-Varianten, wenn es Alternativen gibt */
+const FAMILIES=[[/liegestütz|push-up/i,'push'],[/presse|press(?!\w)|floor press/i,'press'],[/pullover/i,'pullover'],
+  [/kniebeuge|squat|wandsitzen|thruster/i,'squat'],[/ausfallschritt|lunge|split|step-up/i,'lunge'],[/kreuzheben|deadlift|good morning|swing/i,'hinge'],
+  [/bridge|hip thrust|donkey|fire hydrant|clamshell|monster/i,'glute'],[/wadenheben/i,'calf'],
+  [/rudern|row|latzug|pull-apart|face pull|high pull/i,'pull'],[/superman|snow angel|y-t-w|swimmer|cobra/i,'backext'],
+  [/schulterdrücken|überkopf|handstand|pike/i,'overhead'],[/seitheben|armkreisen|halo/i,'delt'],[/curl/i,'biceps'],[/trizeps|dips/i,'triceps'],
+  [/seilspringen/i,'rope'],[/jacks|hampel/i,'jacks'],[/sprung|jump|hops/i,'jump'],[/skipping|anfersen|fast feet|laufen|shuffle/i,'run'],[/burpee|sprawl|squat thrust/i,'burpee']];
+function family(e){for(const [re,k] of FAMILIES)if(re.test(e.name))return k;return 'n:'+e.name}
+const patternKey=r=>r==='bauch'?(e=>e.core||family(e)):r==='core'?(e=>e.stab||family(e)):family;
 function quotas(k,n){return Array.from({length:k},(_,i)=>Math.floor(n/k)+(i<n%k?1:0))}
 function pickExercises(regions,n){
   const q=quotas(regions.length,n),used=new Set(),groups=regions.map(()=>[]);
-  const poolOf=r=>r==='bauch'?diversify(poolFor(r),e=>e.core):r==='core'?diversify(poolFor(r),e=>e.stab):poolFor(r);
+  const poolOf=r=>diversify(poolFor(r),patternKey(r));
   regions.forEach((r,i)=>{for(const e of poolOf(r)){if(groups[i].length>=q[i])break;if(!used.has(e.id)){used.add(e.id);groups[i].push({e,r})}}});
   // Region hat zu wenige Übungen → mit Übungen der anderen gewählten Regionen auffüllen
   let short=n-groups.reduce((s,g)=>s+g.length,0);
@@ -695,18 +706,27 @@ function buildTimerOnly(c){
   buildPhases(w);return w;
 }
 $('#btnCreate').onclick=()=>{
+  orderMode=false;
   if(config.timerOnly){current=buildTimerOnly(config);startRun(current);return}
   current=buildWorkout(config);
   if(!current.items.length){toast('Keine Übungen für diese Regionen');return}
   renderPlan();show('v-plan');
 };
 $('#btnBack').onclick=()=>show('v-create');
-$('#btnShuffle').onclick=()=>{current=buildWorkout(config);renderPlan()};
+$('#btnShuffle').onclick=()=>{orderMode=false;current=buildWorkout(config);renderPlan()};
+let orderMode=false;
+$('#btnOrder').onclick=()=>{orderMode=!orderMode;renderPlan()};
+function moveItem(i,d){
+  const j=i+d,it=current.items;if(j<0||j>=it.length)return;
+  [it[i],it[j]]=[it[j],it[i]];buildPhases(current);renderPlan();
+}
 function swapItem(idx){
   const it=current.items[idx],used=new Set(current.items.map(x=>x.ex.id));
-  let free=poolFor(it.reg).filter(e=>!used.has(e.id));
+  let free=shuffle(poolFor(it.reg).filter(e=>!used.has(e.id)&&e.id!==it.ex.id)); // mit und ohne Hilfsmittel gemischt
   if(it.reg==='bauch'&&it.ex.core){const same=free.filter(e=>e.core===it.ex.core);if(same.length)free=same}
-  if(it.reg==='core'&&it.ex.stab){const same=free.filter(e=>e.stab===it.ex.stab);if(same.length)free=same}
+  else if(it.reg==='core'&&it.ex.stab){const same=free.filter(e=>e.stab===it.ex.stab);if(same.length)free=same}
+  else{const key=patternKey(it.reg),taken=new Set(current.items.filter((_,j)=>j!==idx).map(x=>key(x.ex)));
+    const fresh=free.filter(e=>!taken.has(key(e)));if(fresh.length)free=fresh}
   const cand=free.length?free:shuffle(exercises.filter(e=>usable(e)&&!used.has(e.id)&&(current.regions.includes('ganzkoerper')||e.regions.some(r=>current.regions.includes(r)))));
   if(!cand.length){toast('Keine weitere passende Übung');return}
   const e=cand[0];current.items[idx]={ex:e,reg:it.reg,reps:(current.mode==='tabata'||current.mode==='zirkel')?null:repsFor(e,current)};
@@ -732,7 +752,11 @@ function renderPlan(){
   const last=w.planId?history.find(h=>h.planId===w.planId):null,lx=(last&&last.exNotes)||{};
   $('#planLast').innerHTML=last?`<div class="lastres">↻ Letztes Mal (${new Date(last.date).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})}): <b>${resText(last)}</b> in ${fmt(last.done)} min${last.note?`<br><span>📝 ${esc(last.note)}</span>`:''}</div>`:'';
   $('#planList').innerHTML=w.items.map((it,i)=>exRow({num:i+1,name:it.ex.name,sub:(lx[i]?`<b style="color:var(--accent)">Zuletzt: ${esc(lx[i])}</b> · `:'')+regName(it.reg)+(it.reg==='bauch'&&it.ex.core?' · '+CORE_TYPES[it.ex.core]:'')+(it.reg==='core'&&it.ex.stab?' · '+STAB_TYPES[it.ex.stab]:'')+(needs(it.ex).length?' · '+needs(it.ex).map(eqName).join(', '):''),right:w.mode==='tabata'?'max.':w.mode==='zirkel'?w.zWork+' s':repText(it.ex,it.reps),desc:it.ex.desc,
-    extra:`<button class="iconbtn" data-swap="${i}" aria-label="Übung tauschen">↻</button>`})).join('');
+    extra:orderMode?`<button class="iconbtn" data-up="${i}" aria-label="Nach oben" ${i===0?'disabled style="opacity:.3"':''}>↑</button><button class="iconbtn" data-down="${i}" aria-label="Nach unten" ${i===w.items.length-1?'disabled style="opacity:.3"':''}>↓</button>`
+      :`<button class="iconbtn" data-swap="${i}" aria-label="Übung tauschen">↻</button>`})).join('');
+  $$('[data-up]').forEach(b=>b.onclick=()=>moveItem(+b.dataset.up,-1));
+  $$('[data-down]').forEach(b=>b.onclick=()=>moveItem(+b.dataset.down,1));
+  $('#btnOrder').classList.toggle('on',orderMode);$('#btnOrder').textContent=orderMode?'✓ Fertig':'⇅ Reihenfolge';
   bindDesc($('#planList'));
   $$('[data-swap]').forEach(b=>b.onclick=()=>swapItem(+b.dataset.swap));
   if(w.items.length<w.wanted)toast(`Nur ${w.items.length} passende Übungen vorhanden`);
@@ -1223,7 +1247,7 @@ $('#modeInfo').onclick=()=>modal(`<h3>Die Modi kurz erklärt</h3><ul class="minf
 </ul><button class="btn primary" data-a="ok">Verstanden</button>`);
 renderCreate();
 /* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
-const APP_VERSION='v25';
+const APP_VERSION='v26';
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
