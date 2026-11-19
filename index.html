@@ -10,6 +10,16 @@
 <meta name="apple-mobile-web-app-title" content="GymJongUn">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="description" content="Trainings-Timer für AMRAP, EMOM, Tabata und Zirkel">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="GymJongUn">
+<meta property="og:title" content="GymJongUn – Training">
+<meta property="og:description" content="Geteiltes Training öffnen und direkt starten">
+<meta property="og:url" content="https://manuelle123456789.github.io/GymJongUn/">
+<meta property="og:image" content="https://manuelle123456789.github.io/GymJongUn/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
 <title>GymJongUn</title>
 <style>
 :root{
@@ -252,7 +262,7 @@ nav.tabs button.on{color:var(--accent)}
 
 <!-- ===== Verlauf ===== -->
 <section class="view" id="v-history"><div class="wrap">
-  <h1>Verlauf</h1>
+  <div class="row between"><h1>Verlauf</h1><button class="chip sm" id="btnPasteShared">📥 Geteiltes öffnen</button></div>
   <div class="stats" id="stats"></div>
   <h2>Letzte 120 Tage</h2>
   <div id="histList"></div>
@@ -1067,40 +1077,67 @@ function shareText(h){
   if(h.note){L.push('');L.push('📝 '+h.note)}
   return L.join('\n');
 }
+const PLAN_KEYS=['mode','level','minutes','emomInt','tabRounds','tabWork','tabRest','zWork','zChange','zRounds','zRest'];
 function shareLink(h){
   if(!h.plan)return '';
-  const p={...h.plan,items:h.plan.items.map(({id,name,reps,unit,reg,desc,equip})=>({id,name,reps,unit,reg,desc,equip}))};
-  const data={v:1,plan:p,note:h.note||'',exNotes:h.exNotes||{},date:h.date,mode:h.mode,rounds:h.rounds,ofRounds:h.ofRounds,done:h.done,complete:h.complete};
-  return location.origin+location.pathname+'#t='+b64e(JSON.stringify(data));
+  const p=h.plan;
+  // Kompakt: nur Name, Wdh., Region (+ 's' für Sekunden) je Übung → kurzer Link, den Nachrichten-Apps vollständig erkennen
+  const d=[2,PLAN_KEYS.map(k=>p[k]??0),p.regions||[],p.timerOnly?1:0,
+    p.items.map(it=>{const a=[it.name,it.reps||0,it.reg||''];if(it.unit==='sek')a.push('s');return a}),
+    h.note||'',h.exNotes||{},h.date,h.rounds,h.ofRounds||0,h.done,h.complete?1:0];
+  return location.origin+location.pathname+'#w'+b64e(JSON.stringify(d));
 }
 async function shareEntry(id){
   const h=history.find(x=>x.id===id);if(!h)return;
-  const link=location.protocol.startsWith('http')?shareLink(h):'';
-  const text=shareText(h)+(link?'\n\nTraining in GymJongUn öffnen:\n'+link:'');
-  try{if(navigator.share){await navigator.share({title:'GymJongUn Training',text});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const url=location.protocol.startsWith('http')?shareLink(h):'';
+  const text=shareText(h)+(url?'\n\n👉 Link antippen, um das Training in GymJongUn zu öffnen:':'');
+  try{if(navigator.share){await navigator.share(url?{title:'GymJongUn Training',text,url}:{title:'GymJongUn Training',text});return}}catch(e){if(e&&e.name==='AbortError')return}
+  const all=text+(url?'\n'+url:'');
   modal(`<div class="notebox"><h3>Training teilen</h3><p class="nmeta">Text kopieren und z. B. per WhatsApp oder Mail senden.</p>
-    <textarea class="nf" id="shTxt" rows="9" readonly>${esc(text)}</textarea></div>
+    <textarea class="nf" id="shTxt" rows="9" readonly>${esc(all)}</textarea></div>
     <button class="btn primary" id="shCopy">Text kopieren</button><button class="btn ghost" data-a="ok">Schließen</button>`);
-  $('#shCopy').onclick=async()=>{try{await navigator.clipboard.writeText(text);toast('Kopiert')}catch(e){$('#shTxt').select();toast('Text markiert – jetzt kopieren')}};
+  $('#shCopy').onclick=async()=>{try{await navigator.clipboard.writeText(all);toast('Kopiert')}catch(e){$('#shTxt').select();toast('Text markiert – jetzt kopieren')}};
 }
-/* Geteilten Link öffnen → Training übernehmen */
-function openShared(){
-  const m=location.hash.match(/^#t=([\w-]+)/);if(!m)return;
-  try{window.history.replaceState(null,'',location.pathname+location.search)}catch(e){}
-  let d;try{d=JSON.parse(b64d(m[1]))}catch(e){toast('Link ist ungültig');return}
-  const p=d&&d.plan;if(!p||!Array.isArray(p.items)){toast('Link ist ungültig');return}
+/* Geteiltes Training öffnen – per Link (#w…) oder eingefügtem Text */
+function decodeShared(str){
+  let m=str.match(/#w([\w-]{20,})/);
+  if(m){
+    const a=JSON.parse(b64d(m[1]));if(!Array.isArray(a)||a[0]!==2)throw 0;
+    const plan={};PLAN_KEYS.forEach((k,i)=>plan[k]=a[1][i]);plan.regions=a[2];plan.timerOnly=!!a[3];
+    plan.items=a[4].map(([name,reps,reg,u])=>({name,reps:reps||null,reg,unit:u==='s'?'sek':'wdh'}));
+    return {plan,note:a[5],exNotes:a[6],date:a[7],mode:plan.mode,rounds:a[8],ofRounds:a[9]||null,done:a[10],complete:!!a[11]};
+  }
+  m=str.match(/#t=([\w-]+)/);if(m)return JSON.parse(b64d(m[1])); // ältere, lange Links
+  throw 0;
+}
+function openSharedData(d){
+  const p=d&&d.plan;if(!p||!Array.isArray(p.items)){toast('Kein gültiges Training gefunden');return}
   if(p.timerOnly){
     ['mode','minutes','emomInt','tabRounds','tabWork','tabRest','zWork','zChange','zRounds','zRest'].forEach(k=>{if(p[k]!==undefined)config[k]=p[k]});
     if(p.mode==='zirkel')config.exCount=p.items.length;
     config.timerOnly=true;saveConfig();renderCreate();show('v-create');toast('Geteilter Timer übernommen');return;
   }
   const w={...p,regions:[...(p.regions||[])],id:uid(),planId:null,
-    items:p.items.map(it=>({ex:exercises.find(e=>e.id===it.id)||exercises.find(e=>e.name===it.name)||{id:it.id,name:it.name,unit:it.unit||'wdh',desc:it.desc,equip:it.equip||[],regions:[it.reg]},reg:it.reg,reps:it.reps}))};
+    items:p.items.map(it=>({ex:(it.id&&exercises.find(e=>e.id===it.id))||exercises.find(e=>e.name===it.name)||{id:'shared-'+uid(),name:it.name,unit:it.unit||'wdh',desc:it.desc||'',equip:it.equip||[],regions:[it.reg]},reg:it.reg,reps:it.reps}))};
   w.shared={date:d.date,mode:d.mode,rounds:d.rounds,ofRounds:d.ofRounds,done:d.done,note:d.note,exNotes:d.exNotes||{}};
   w.wanted=w.items.length;w.cool=pickStretches(w.regions.length?w.regions:['ganzkoerper']);
   buildPhases(w);current=w;orderMode=false;renderPlan();show('v-plan');
 }
+function openShared(){
+  if(!/^#(w|t=)/.test(location.hash))return;
+  const h=location.hash;
+  try{window.history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  let d;try{d=decodeShared(h)}catch(e){toast('Link ist ungültig oder unvollständig');return}
+  openSharedData(d);
+}
 window.addEventListener('hashchange',openShared);
+function pasteShared(){
+  modal(`<div class="notebox"><h3>Geteiltes Training öffnen</h3><p class="nmeta">Die ganze Nachricht mit dem Training kopieren und hier einfügen.</p>
+    <textarea class="nf" id="psTxt" rows="6" placeholder="Nachricht hier einfügen"></textarea></div>
+    <button class="btn primary" id="psGo">Training öffnen</button><button class="btn ghost" data-a="x">Abbrechen</button>`);
+  $('#psGo').onclick=()=>{const t=$('#psTxt').value;let d;try{d=decodeShared(t)}catch(e){toast('Kein Training-Link im Text gefunden');return}
+    $('#modal').classList.remove('on');openSharedData(d)};
+}
 /* Notiz & Gewichte zu einer Einheit */
 function editNotes(id,after){
   const h=history.find(x=>x.id===id);if(!h)return;
@@ -1311,8 +1348,9 @@ $('#modeInfo').onclick=()=>modal(`<h3>Die Modi kurz erklärt</h3><ul class="minf
 </ul><button class="btn primary" data-a="ok">Verstanden</button>`);
 renderCreate();
 openShared();
+$('#btnPasteShared').onclick=pasteShared;
 /* ===== Updates: neue Version erkennen und automatisch neu laden ===== */
-const APP_VERSION='v28';
+const APP_VERSION='v29';
 if('serviceWorker' in navigator&&location.protocol==='https:'){
   const hadCtrl=!!navigator.serviceWorker.controller;let reloading=false;
   navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(reg=>{
